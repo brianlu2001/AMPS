@@ -186,8 +186,14 @@ export default function BuyerPage() {
         <div style={{ maxWidth: "520px" }}>
           {/* Onboarding */}
           <SectionHeader title="Enroll as Buyer Agent" color={C.buyer} />
-          <div style={{ color: C.muted, fontSize: "12px", marginBottom: "10px" }}>
+          <div style={{ color: C.muted, fontSize: "12px", marginBottom: "6px" }}>
             Provide a natural-language instruction + optional URL. The pipeline parses, fetches, and extracts your profile.
+          </div>
+          <div style={{ fontSize: "11px", marginBottom: "10px" }}>
+            <a href="/docs/buyer-agent-guide.md" target="_blank" rel="noopener noreferrer"
+              style={{ color: C.buyer }}>
+              Agent Documentation & Onboarding Guide →
+            </a>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "10px" }}>
             {EXAMPLE_INSTRUCTIONS.map((ex) => (
@@ -203,7 +209,19 @@ export default function BuyerPage() {
             ))}
           </div>
           <textarea value={instruction} onChange={(e) => setInstruction(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
-          <input type="url" placeholder="Context URL (optional)" value={url} onChange={(e) => setUrl(e.target.value)} style={inputStyle} />
+          <input type="url" placeholder="Context URL (optional — overrides default guide)" value={url} onChange={(e) => setUrl(e.target.value)} style={inputStyle} />
+          <div style={{ fontSize: "11px", marginBottom: "8px", marginTop: "-4px" }}>
+            <span style={{ color: C.muted }}>Documentation sent to agent: </span>
+            {url ? (
+              <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: C.buyer, wordBreak: "break-all" }}>
+                {url}
+              </a>
+            ) : (
+              <a href="/docs/buyer-agent-guide.md" target="_blank" rel="noopener noreferrer" style={{ color: C.buyer }}>
+                /docs/buyer-agent-guide.md (default)
+              </a>
+            )}
+          </div>
           <button onClick={handleOnboard} disabled={loading || !instruction.trim()} style={btnStyle(C.buyer)}>
             {loading ? "Enrolling…" : "Enroll as Buyer Agent"}
           </button>
@@ -303,6 +321,7 @@ function OnboardingResult({ result }: { result: Record<string, unknown> }) {
   const confidence = (result.confidence as number) ?? 0;
   const profile    = result.profile as Record<string, unknown> | null;
   const warnings   = result.warnings as string[] ?? [];
+  const contextUrl = profile?.context_source_url as string | null | undefined;
 
   return (
     <div style={{ marginTop: "12px", background: C.inset, border: `1px solid ${success ? C.pass + "44" : C.fail + "44"}`, borderRadius: "6px", padding: "14px", fontSize: "12px" }}>
@@ -319,6 +338,20 @@ function OnboardingResult({ result }: { result: Record<string, unknown> }) {
             <KV k="Categories" v={(profile.preferred_categories as string[]).map(c => c.replace(/_/g, " ")).join(", ")} />}
         </div>
       )}
+      <div style={{ marginTop: "10px", fontSize: "11px" }}>
+        <span style={{ color: C.muted }}>Documentation sent to agent: </span>
+        {contextUrl ? (
+          <a href={contextUrl} target="_blank" rel="noopener noreferrer"
+            style={{ color: C.buyer, wordBreak: "break-all" }}>
+            {contextUrl}
+          </a>
+        ) : (
+          <a href="/docs/buyer-agent-guide.md" target="_blank" rel="noopener noreferrer"
+            style={{ color: C.buyer }}>
+            /docs/buyer-agent-guide.md
+          </a>
+        )}
+      </div>
       {warnings.length > 0 && (
         <div style={{ marginTop: "8px" }}>
           {warnings.map((w, i) => <div key={i} style={{ color: C.warn, fontSize: "11px" }}>⚠ {w}</div>)}

@@ -122,6 +122,12 @@ export default function SellerPage() {
           {/* Profile card */}
           <div style={cardStyle}>
             <SectionHeader title="My Profile" color={C.seller} />
+            <div style={{ fontSize: "11px", marginBottom: "8px" }}>
+              <a href="/docs/seller-agent-guide.md" target="_blank" rel="noopener noreferrer"
+                style={{ color: C.seller }}>
+                Agent Documentation & Onboarding Guide →
+              </a>
+            </div>
             {myProfile ? (
               <>
                 <div style={{ color: C.seller, fontWeight: "bold", marginBottom: "4px" }}>{(myProfile as any).display_name}</div>
@@ -136,6 +142,20 @@ export default function SellerPage() {
                 <div style={{ fontSize: "12px" }}>
                   <span style={{ color: C.muted }}>Confidence: </span>
                   <ScoreBar score={Number((myProfile as any).confidence_score ?? 0)} width={100} />
+                </div>
+                <div style={{ fontSize: "11px", marginTop: "8px" }}>
+                  <span style={{ color: C.muted }}>Documentation sent to agent: </span>
+                  {(myProfile as any).website_url ? (
+                    <a href={(myProfile as any).website_url} target="_blank" rel="noopener noreferrer"
+                      style={{ color: C.seller, wordBreak: "break-all" }}>
+                      {(myProfile as any).website_url}
+                    </a>
+                  ) : (
+                    <a href="/docs/seller-agent-guide.md" target="_blank" rel="noopener noreferrer"
+                      style={{ color: C.seller }}>
+                      /docs/seller-agent-guide.md (default)
+                    </a>
+                  )}
                 </div>
                 <div style={{ marginTop: "8px" }}>
                   <Badge
@@ -271,6 +291,20 @@ function SellerCard({ seller, isMe }: { seller: Record<string, unknown>; isMe?: 
         {s.reputation_score > 0 && <span><span style={{ color: C.muted }}>rep: </span><span style={{ color: C.warn }}>{Number(s.reputation_score).toFixed(1)}</span></span>}
       </div>
       <Badge label={s.approval_status ?? "unknown"} color={APPROVAL_COLORS[s.approval_status] ?? C.secondary} />
+      <div style={{ fontSize: "11px", marginTop: "8px" }}>
+        <span style={{ color: C.muted }}>Docs: </span>
+        {s.website_url ? (
+          <a href={s.website_url} target="_blank" rel="noopener noreferrer"
+            style={{ color: C.seller, wordBreak: "break-all" }}>
+            {s.website_url}
+          </a>
+        ) : (
+          <a href="/docs/seller-agent-guide.md" target="_blank" rel="noopener noreferrer"
+            style={{ color: C.seller }}>
+            /docs/seller-agent-guide.md
+          </a>
+        )}
+      </div>
     </div>
   );
 }
