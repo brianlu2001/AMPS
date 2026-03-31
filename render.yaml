@@ -19,5 +19,3 @@ services:
         value: http
       - key: INGESTION_FALLBACK_TO_MOCK
         value: "true"
-      - key: PYTHON_VERSION
-        value: "3.11.0"
