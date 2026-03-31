@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: amps-backend
+    runtime: python
+    rootDir: .
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        value: 8b6e367af81e5c39ddf8c694fa37194b0e98292c6b5682d167aa95a2ed06d4d5
+      - key: CORS_ORIGINS
+        value: https://ampsmarketplace.com,https://www.ampsmarketplace.com
+      - key: AUDIT_QUALITY_THRESHOLD
+        value: "0.70"
+      - key: POLLING_INTERVAL_SECONDS
+        value: "5"
+      - key: INGESTION_PROVIDER
+        value: http
+      - key: INGESTION_FALLBACK_TO_MOCK
+        value: "true"
+      - key: PYTHON_VERSION
+        value: "3.11.0"
