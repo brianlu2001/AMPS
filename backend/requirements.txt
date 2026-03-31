@@ -1,0 +1,35 @@
+# AMPS backend dependencies
+# Generated from all imports across backend/*.py
+#
+# stdlib used (no package needed):
+#   abc, dataclasses, datetime, enum, functools, math,
+#   os, re, time, typing, urllib.parse, uuid
+#
+# To install:
+#   pip install -r requirements.txt
+
+# --- Web framework ---
+fastapi>=0.110.0            # APIRouter, Depends, HTTPException, HTTPBearer, CORSMiddleware
+uvicorn[standard]>=0.29.0   # ASGI server; [standard] adds websockets + watchfiles for --reload
+
+# --- Data validation ---
+pydantic>=2.0.0             # BaseModel, Field — all domain models and request schemas
+
+# --- Auth ---
+PyJWT>=2.8.0                # jwt.encode / jwt.decode — auth/tokens.py
+                            # Future: add cryptography>=42.0.0 for RS256 if switching to asymmetric keys
+
+# --- HTTP client ---
+httpx>=0.27.0               # onboarding/ingestion.py: HttpIngestionProvider fetches buyer context URLs
+                            # Also available for future external agent API calls
+
+# --- Config ---
+python-dotenv>=1.0.0        # Load .env file into os.environ at startup
+
+# --- Future (not yet used, uncomment when needed) ---
+# bcrypt>=4.0.0             # Password hashing — replace plain-text User.password (auth/tokens.py)
+# sqlalchemy>=2.0.0         # ORM layer — replace InMemoryStore (store.py)
+# alembic>=1.13.0           # DB migrations — pair with sqlalchemy
+# asyncpg>=0.29.0           # Async PostgreSQL driver — pair with sqlalchemy async
+# redis>=5.0.0              # Task queue backing store or session cache
+# celery>=5.3.0             # Background task queue for async agent execution
