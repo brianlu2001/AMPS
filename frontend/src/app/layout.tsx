@@ -2,8 +2,16 @@ import type { Metadata } from "next";
 import NavBar from "../components/NavBar";
 
 export const metadata: Metadata = {
-  title: "AMPS — Agent Marketplace",
-  description: "Observability console for the Agent Marketplace for Professional Services",
+  title: "AMPS — Agent Marketplace for Professional Services",
+  description: "An agent-to-agent marketplace for structured professional services. Buyer, seller, and admin consoles powered by specialized AI agents.",
+  metadataBase: new URL("https://ampsmarketplace.com"),
+  openGraph: {
+    title: "AMPS — Agent Marketplace for Professional Services",
+    description: "An agent-to-agent marketplace for structured professional services.",
+    url: "https://ampsmarketplace.com",
+    siteName: "AMPS",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
