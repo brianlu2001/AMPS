@@ -27,6 +27,7 @@
 17. [Scalability and Rewrite Notes](#17-scalability-and-rewrite-notes)
 18. [Suggested Next Enhancements](#18-suggested-next-enhancements)
 19. [Quick Start](#19-quick-start)
+20. [Vercel Deployment](#20-vercel-deployment)
 
 ---
 
@@ -875,4 +876,188 @@ See `.env.example` for all variables. Key ones:
 
 ---
 
-*Last updated: 2026-03-30 · See `docs/system-contract.md` for detailed architectural decision log.*
+---
+
+## 20. Vercel Deployment
+
+### Architecture assessment
+
+This is a **monorepo with two separate apps** that must be deployed independently:
+
+| Part | Framework | Vercel-compatible? |
+|---|---|---|
+| `frontend/` | Next.js 14 (App Router) | **Yes — fully supported** |
+| `backend/` | Python / FastAPI | **No — deploy separately** |
+
+**Vercel only hosts the frontend.** The Python backend must be deployed on a platform that runs Python processes (Railway, Render, Fly.io, etc.). The frontend communicates with the backend via `NEXT_PUBLIC_API_URL`.
+
+---
+
+### Frontend: confirmed deployable
+
+The frontend passes all pre-deployment checks:
+
+- **Build:** `npm run build` exits cleanly (9 routes, 0 errors, 0 TS errors)
+- **Root route `/`:** renders the landing page — does **not** 404
+- **All routes present:** `/`, `/login`, `/buyer`, `/seller`, `/admin`, `/audit`, `/tasks/[id]`
+- **All routes static or SSR:** no broken dynamic imports, no missing env vars blocking build
+- **`vercel.json`:** valid schema, security headers only — no invalid fields
+- **`package.json`:** `build` script is `next build`, correct and standard
+- **`tsconfig.json`:** standard Next.js App Router config
+- **`next-env.d.ts`:** present and committed
+
+---
+
+### Step-by-step Vercel deployment
+
+#### Step 1 — Commit everything
+
+These files **must be committed** before deploying (Vercel clones from git):
+
+```bash
+cd frontend
+git add next-env.d.ts package-lock.json
+cd ..
+git add frontend/src/app/buyer/page.tsx frontend/next.config.js .gitignore
+git commit -m "fix: TS error in buyer page, clean next.config, update gitignore"
+git push
+```
+
+#### Step 2 — Create the Vercel project
+
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Import your GitHub repository
+3. In the **Configure Project** screen, set:
+
+| Setting | Value |
+|---|---|
+| **Root Directory** | `frontend` |
+| **Framework Preset** | Next.js (auto-detected) |
+| **Build Command** | *(leave empty — uses `npm run build` from package.json)* |
+| **Output Directory** | *(leave empty — Next.js default `.next`)* |
+| **Install Command** | *(leave empty — uses `npm install`)* |
+
+> **Root Directory is the critical setting.** Without it, Vercel looks for `package.json` at the repo root, finds none, and the build fails. Set it to `frontend` in the Vercel UI — this cannot be put in `vercel.json`.
+
+#### Step 3 — Set environment variables
+
+In Vercel → Project → Settings → Environment Variables, add:
+
+| Name | Value | Environment |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `https://your-backend.example.com` | Production, Preview, Development |
+
+> If the backend is not yet deployed, you can temporarily set this to any valid URL — the frontend will build and serve pages, but API calls will fail gracefully with error banners. Set the real URL once the backend is live.
+
+#### Step 4 — Add custom domain
+
+In Vercel → Project → Settings → Domains:
+1. Add `ampsmarketplace.com`
+2. Add `www.ampsmarketplace.com`
+3. Vercel will show the DNS records to set at your registrar:
+
+| Type | Name | Value |
+|---|---|---|
+| `A` | `@` | `76.76.21.21` |
+| `CNAME` | `www` | `cname.vercel-dns.com` |
+
+#### Step 5 — Deploy
+
+Click **Deploy**. Vercel runs:
+```
+npm install   (inside frontend/)
+npm run build (inside frontend/)
+```
+
+Expected output:
+```
+Route (app)          Size
+○ /                  137 B
+○ /login             ...
+○ /buyer             ...
+○ /seller            ...
+○ /admin             ...
+○ /audit             ...
+ƒ /tasks/[id]        ...
+```
+
+---
+
+### Backend deployment (not on Vercel)
+
+The FastAPI backend **cannot run on Vercel** because:
+- Vercel only runs Node.js and Edge runtimes (not Python)
+- The backend uses long-lived in-memory state (`InMemoryStore`) incompatible with stateless serverless functions
+- The backend requires persistent process startup (seeding, registry init)
+
+**Recommended platforms for the backend:**
+
+| Platform | Steps |
+|---|---|
+| **Railway** | New project → Deploy from GitHub → set root to `backend/` → start command: `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| **Render** | New Web Service → root `backend/` → build: `pip install -r requirements.txt` → start: `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| **Fly.io** | `fly launch` inside `backend/` — uses the existing `Dockerfile` |
+
+After deploying the backend, update `NEXT_PUBLIC_API_URL` in Vercel and redeploy the frontend.
+
+**Backend CORS:** before deploying, update `.env` / backend config so `CORS_ORIGINS` includes your Vercel domain:
+```
+CORS_ORIGINS=https://ampsmarketplace.com,https://www.ampsmarketplace.com
+```
+
+---
+
+### Exact Vercel settings reference
+
+```
+Root Directory:   frontend
+Build Command:    npm run build       (auto from package.json)
+Install Command:  npm install         (auto)
+Output Directory: .next               (auto, Next.js default)
+Node.js Version:  20.x               (set in Vercel project settings)
+```
+
+Required environment variable:
+```
+NEXT_PUBLIC_API_URL = https://your-backend-host.example.com
+```
+
+---
+
+### Local pre-deployment validation
+
+Run these commands before every deployment to catch errors early:
+
+```bash
+cd frontend
+
+# 1. Install deps
+npm install
+
+# 2. Type-check (must exit with no output = 0 errors)
+npx tsc --noEmit
+
+# 3. Production build (must complete without errors)
+npm run build
+
+# 4. Verify all 9 routes appear in build output
+#    Expected: ○ /  ○ /login  ○ /buyer  ○ /seller  ○ /admin  ○ /audit  ƒ /tasks/[id]
+```
+
+---
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| **404 on all routes after deploy** | Root Directory not set to `frontend` | In Vercel UI: Project → Settings → General → Root Directory → `frontend` |
+| **Build fails: "next: not found"** | Same as above — Vercel looking at repo root | Set Root Directory to `frontend` |
+| **Build fails: Type error** | TypeScript regression | Run `npx tsc --noEmit` locally and fix errors before pushing |
+| **Pages load but API calls fail** | `NEXT_PUBLIC_API_URL` not set or wrong | Vercel → Environment Variables → set correct backend URL → redeploy |
+| **API calls fail with CORS error** | Backend CORS config doesn't include Vercel domain | Add `https://ampsmarketplace.com` to `CORS_ORIGINS` in backend config |
+| **`www.ampsmarketplace.com` doesn't work** | Missing CNAME record | Add `CNAME www → cname.vercel-dns.com` at your registrar |
+| **Deployment uses wrong Node version** | Default Vercel Node < 20 | Vercel → Settings → General → Node.js Version → 20.x |
+
+---
+
+*Last updated: 2026-03-31 · See `docs/system-contract.md` for detailed architectural decision log.*

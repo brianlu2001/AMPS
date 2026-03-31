@@ -139,7 +139,7 @@ export default function BuyerPage() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
         <h2 style={{ color: C.buyer, margin: 0 }}>Buyer Console</h2>
-        {profile?.id && (
+        {!!profile?.id && (
           <div style={{ textAlign: "right", fontSize: "11px", color: C.muted }}>
             {user?.email}<br />
             Profile: <span style={{ color: C.buyer }}>{String(profile.id).slice(0, 8)}…</span>
@@ -151,7 +151,7 @@ export default function BuyerPage() {
       <ErrorBanner error={error} />
 
       {/* Stats row */}
-      {profile?.id && (
+      {!!profile?.id && (
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "24px" }}>
           <StatCard label="Tasks"     value={tasks.length}        color={C.buyer} />
           <StatCard label="Completed" value={completedTasks.length} color={C.pass} />
@@ -210,7 +210,7 @@ export default function BuyerPage() {
           {onboardResult && <OnboardingResult result={onboardResult} />}
 
           {/* Task creation (only if enrolled) */}
-          {profile?.id && (
+          {!!profile?.id && (
             <>
               <div style={{ marginTop: "32px" }} />
               <SectionHeader title="Submit New Task" color={C.buyer} />
