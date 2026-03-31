@@ -1,9 +1,6 @@
 {
   "version": 2,
   "$schema": "https://openapi.vercel.sh/vercel.json",
-
-  "comment": "AMPS frontend — Next.js app deployed from the /frontend subdirectory.",
-
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/.next",
   "installCommand": "cd frontend && npm install",
