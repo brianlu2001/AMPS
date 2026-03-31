@@ -27,7 +27,11 @@ import {
 
 export default function TaskDetailPage() {
   const params = useParams();
-  const taskId = params?.id as string;
+  // params.id is string | string[] in Next.js App Router; normalise to string.
+  // Array form only occurs with catch-all segments ([...id]) — not used here,
+  // but the guard prevents a runtime crash if params hasn't hydrated yet.
+  const rawId = params?.id;
+  const taskId = Array.isArray(rawId) ? rawId[0] : (rawId ?? "");
 
   const [task, setTask]           = useState<Task | null>(null);
   const [quotes, setQuotes]       = useState<Quote[]>([]);
